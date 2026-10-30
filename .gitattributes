@@ -1,0 +1,6 @@
+# Signed scripts must keep the same bytes on every checkout, so pin their line endings.
+*.ps1  text eol=crlf
+*.psm1 text eol=crlf
+*.psd1 text eol=crlf
+*.cmd  text eol=crlf
+*.md   text eol=lf
