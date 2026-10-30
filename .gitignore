@@ -1,0 +1,23 @@
+# Secrets never live in this repo (they live in Windows Credential Manager)
+*.pfx
+*.p12
+*.dpapi
+.env
+*-export.json
+
+# Logs and temp
+logs/
+*.log
+*.tmp
+*~
+
+# Test output
+TestResults/
+testResults.xml
+
+# OS / editor
+Thumbs.db
+Desktop.ini
+.vs/
+.vscode/*
+.claude/
