@@ -9,7 +9,8 @@
     FunctionsToExport     = @(
         'Get-LiteCredential', 'Add-LiteCredential', 'Set-LiteCredential', 'Remove-LiteCredential',
         'Get-LiteSecret', 'Get-LiteItemNames',
-        'Get-LitePrefix', 'Set-LitePrefix', 'Set-LiteBackend'
+        'Copy-LiteSecret',
+        'Get-LitePrefix', 'Set-LitePrefix', 'Set-LiteBackend', 'Set-LiteClipboardBackend'
     )
     CmdletsToExport       = @()
     VariablesToExport     = @()
