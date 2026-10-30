@@ -9,6 +9,7 @@
     FunctionsToExport     = @(
         'Get-LiteCredential', 'Add-LiteCredential', 'Set-LiteCredential', 'Remove-LiteCredential',
         'Get-LiteSecret', 'Get-LiteItemNames',
+        'Start-LiteConsole', 'Set-LiteConsoleIO',
         'Copy-LiteSecret', 'Export-LiteMetadata', 'Import-LiteMetadata',
         'Get-LitePrefix', 'Set-LitePrefix', 'Set-LiteBackend', 'Set-LiteClipboardBackend'
     )
