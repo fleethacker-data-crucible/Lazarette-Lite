@@ -8,6 +8,7 @@
     CompatiblePSEditions  = @('Desktop')
     FunctionsToExport     = @(
         'Get-LiteCredential', 'Add-LiteCredential', 'Set-LiteCredential', 'Remove-LiteCredential',
+        'Get-LiteSecret', 'Get-LiteItemNames',
         'Get-LitePrefix', 'Set-LitePrefix', 'Set-LiteBackend'
     )
     CmdletsToExport       = @()
