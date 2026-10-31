@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/brand/emblem-transparent.png" width="280" alt="Lazarette Lite fleet emblem: a compact sailor lockbox and key, in navy, brass and ivory">
+</p>
+
 # Lazarette Lite
 
 **Your Windows credentials, without a new vault.** Lazarette Lite is a small front end to **Windows Credential Manager** for locked-down workstations. It reads, adds, updates and removes the current user's generic credentials, and gives scripts one way to fetch a secret by name.
