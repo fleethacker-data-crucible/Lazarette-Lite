@@ -42,6 +42,10 @@ function Test-LitePrefix {
 }
 
 function Get-LitePrefix {
+    <#
+    .SYNOPSIS
+        Shows the target prefix in use: the session value, then LAZARETTE_LITE_PREFIX, then lazarette-lite/.
+    #>
     # Session override, then the LAZARETTE_LITE_PREFIX environment variable, then the default.
     $p = if ($script:LitePrefixOverride) { $script:LitePrefixOverride }
          elseif ($env:LAZARETTE_LITE_PREFIX) { $env:LAZARETTE_LITE_PREFIX }
@@ -52,6 +56,10 @@ function Get-LitePrefix {
 }
 
 function Set-LitePrefix {
+    <#
+    .SYNOPSIS
+        Sets the target prefix for this session (-Reset to undo). PM/ is refused: it belongs to Lazarette.
+    #>
     [CmdletBinding()]
     param([string]$Prefix, [switch]$Reset)
     if ($Reset -or [string]::IsNullOrEmpty($Prefix)) { $script:LitePrefixOverride = $null; return }
@@ -125,7 +133,8 @@ function ConvertTo-LiteItem {
 
 function Get-LiteCredential {
     <#
-    .SYNOPSIS  Lists the current user's credentials under the Lite prefix. Never returns secrets.
+    .SYNOPSIS
+        Lists the current user's credentials under the Lite prefix. Never returns secrets.
     .PARAMETER Search   Case-insensitive text found in the service, user or note.
     #>
     [CmdletBinding()]
@@ -158,7 +167,8 @@ function Resolve-LiteCredential {
 
 function Add-LiteCredential {
     <#
-    .SYNOPSIS  Adds a generic credential. Fails if one with the same service and user exists, unless -Force.
+    .SYNOPSIS
+        Adds a generic credential. Fails if one with the same service and user exists, unless -Force.
     #>
     [CmdletBinding()]
     param(
@@ -184,7 +194,8 @@ function Add-LiteCredential {
 
 function Set-LiteCredential {
     <#
-    .SYNOPSIS  Edits one credential. Only the parts you pass change; the secret is kept unless -Secret is given.
+    .SYNOPSIS
+        Edits one credential. Only the parts you pass change; the secret is kept unless -Secret is given.
     .PARAMETER NewService  Rename the service (this moves the stored name).
     .PARAMETER NewUser     Rename the user (this moves the stored name).
     #>
@@ -224,6 +235,10 @@ function Set-LiteCredential {
 }
 
 function Remove-LiteCredential {
+    <#
+    .SYNOPSIS
+        Deletes one credential from Windows Credential Manager. Asks first; -Confirm:$false skips the question.
+    #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
     param([Parameter(Mandatory)][string]$Service, [string]$User = '')
     $cur = Resolve-LiteCredential $Service $User

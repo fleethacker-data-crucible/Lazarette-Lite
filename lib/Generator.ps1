@@ -29,8 +29,10 @@ function Set-LiteRandomSource {
 
 function New-LitePassword {
     <#
-    .SYNOPSIS  Makes a random password. Returns a SecureString unless -AsPlainText is given.
-    .DESCRIPTION  Contains at least one of each class it uses. Length 8 to 128 (default 20); Credential Manager
+    .SYNOPSIS
+        Makes a random password. Returns a SecureString unless -AsPlainText is given.
+    .DESCRIPTION
+        Contains at least one of each class it uses. Length 8 to 128 (default 20); Credential Manager
                   holds up to 1,280 characters. -NoSymbols suits systems that reject punctuation; -NoAmbiguous
                   drops look-alikes (0 O o 1 l I |) for passwords that get read aloud or retyped.
     #>
