@@ -152,6 +152,23 @@ function Invoke-LitePrefix {
     Write-LiteLine ("  Prefix is now {0}" -f (Get-LitePrefix)) 'Green'
 }
 
+function Invoke-LiteGenerate {
+    # Adds an item whose secret is generated; the secret is never shown, only copied if you ask.
+    $svc = [string](Read-LitePrompt 'Service (for example gitlab)')
+    if ([string]::IsNullOrWhiteSpace($svc)) { return }
+    $usr = [string](Read-LitePrompt "User (blank = $svc)")
+    $note = [string](Read-LitePrompt 'Note (optional)')
+    $len = [string](Read-LitePrompt 'Length [20]')
+    $p = @{ Length = $(if ($len.Trim()) { [int]$len.Trim() } else { 20 }) }
+    if (([string](Read-LitePrompt 'Letters and digits only? [y/N]')).Trim() -match '^(?i:y|yes)$') { $p.NoSymbols = $true }
+    $r = Add-LiteCredential -Service $svc.Trim() -User $usr.Trim() -Secret (New-LitePassword @p) -Comment $note
+    Write-LiteLine ("  Added {0} / {1} with a generated {2}-character secret." -f $r.Service, $r.User, $p.Length) 'Green'
+    if (([string](Read-LitePrompt 'Copy it now? [y/N]')).Trim() -match '^(?i:y|yes)$') {
+        $c = Copy-LiteSecret -Service $r.Service -User $r.User
+        Write-LiteLine "  Clipboard: $($c.Outcome)."
+    }
+}
+
 function Start-LiteConsole {
     <#
     .SYNOPSIS  The Lazarette Lite menu. Quit with q.
@@ -165,7 +182,7 @@ function Start-LiteConsole {
         Write-LiteLine ''
         Write-LiteLine ("Prefix {0}  ({1} item{2})" -f (Get-LitePrefix), $count, $(if ($count -eq 1) { '' } else { 's' }))
         Write-LiteLine '  1 List   2 Search   3 Add   4 Edit   5 Delete   6 Copy secret'
-        Write-LiteLine '  7 Export names   8 Import names   9 Prefix   q Quit'
+        Write-LiteLine '  7 Export names   8 Import names   9 Prefix   g Generate   q Quit'
         # A failed read here (no console attached) ends the menu instead of looping on the error.
         $c = ([string](Read-LitePrompt 'Choose')).Trim().ToLowerInvariant()
         try {
@@ -179,6 +196,7 @@ function Start-LiteConsole {
                 '7' { Invoke-LiteExport }
                 '8' { Invoke-LiteImport }
                 '9' { Invoke-LitePrefix }
+                'g' { Invoke-LiteGenerate }
                 { $_ -in 'q', '0', 'quit', 'exit' } { return }
                 default { Write-LiteLine '  Pick a number from the menu, or q to quit.' 'Yellow' }
             }
