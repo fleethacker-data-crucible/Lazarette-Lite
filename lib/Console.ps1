@@ -169,6 +169,13 @@ function Invoke-LiteGenerate {
     }
 }
 
+function Invoke-LiteCheck {
+    $rows = @(Test-LiteStore)
+    if ($rows.Count -eq 0) { Write-LiteLine '  No problems found.' 'Green'; return }
+    foreach ($r in $rows) { Write-LiteLine ("  {0,-7} {1} / {2}: {3}" -f $r.Severity, $r.Service, $r.User, $r.Problem) $(if ($r.Severity -eq 'Error') { 'Red' } else { 'Yellow' }) }
+    Write-LiteLine ("  {0} problem{1}." -f $rows.Count, $(if ($rows.Count -eq 1) { '' } else { 's' }))
+}
+
 function Start-LiteConsole {
     <#
     .SYNOPSIS  The Lazarette Lite menu. Quit with q.
@@ -182,7 +189,7 @@ function Start-LiteConsole {
         Write-LiteLine ''
         Write-LiteLine ("Prefix {0}  ({1} item{2})" -f (Get-LitePrefix), $count, $(if ($count -eq 1) { '' } else { 's' }))
         Write-LiteLine '  1 List   2 Search   3 Add   4 Edit   5 Delete   6 Copy secret'
-        Write-LiteLine '  7 Export names   8 Import names   9 Prefix   g Generate   q Quit'
+        Write-LiteLine '  7 Export names   8 Import names   9 Prefix   g Generate   c Check   q Quit'
         # A failed read here (no console attached) ends the menu instead of looping on the error.
         $c = ([string](Read-LitePrompt 'Choose')).Trim().ToLowerInvariant()
         try {
@@ -197,6 +204,7 @@ function Start-LiteConsole {
                 '8' { Invoke-LiteImport }
                 '9' { Invoke-LitePrefix }
                 'g' { Invoke-LiteGenerate }
+                'c' { Invoke-LiteCheck }
                 { $_ -in 'q', '0', 'quit', 'exit' } { return }
                 default { Write-LiteLine '  Pick a number from the menu, or q to quit.' 'Yellow' }
             }
