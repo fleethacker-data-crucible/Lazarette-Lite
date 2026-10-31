@@ -1,0 +1,36 @@
+name: Lazarette Lite Windows tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  windows:
+    name: lite-windows
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Parse scripts and run tests on Windows PowerShell 5.1
+        shell: powershell
+        env:
+          GITHUB_TOKEN: ''
+          GH_TOKEN: ''
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($PSVersionTable.PSVersion.Major -ne 5) { throw 'Windows PowerShell 5.1 is required.' }
+          $bad = 0
+          Get-ChildItem -Recurse -File | Where-Object { $_.Extension -in '.ps1', '.psm1', '.psd1' -and $_.FullName -notmatch '\\.git\' } | ForEach-Object {
+            $errs = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$errs)
+            if ($errs) { $bad++; $errs | ForEach-Object { Write-Host "$($_.Extent.File):$($_.Extent.StartLineNumber) $($_.Message)" } }
+          }
+          if ($bad) { throw "$bad script(s) have parse errors." }
+          # The Pester suite arrives with the credential-store PR; the fake backend is used, never the real Credential Manager.
+          if (Test-Path tests\Run-Tests.ps1) {
+            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests\Run-Tests.ps1
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          } else { Write-Host 'No tests yet on this branch.' }
