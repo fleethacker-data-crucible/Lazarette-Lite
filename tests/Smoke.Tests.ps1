@@ -24,7 +24,7 @@ AfterAll {
 }
 
 Describe 'Real Windows Credential Manager (throwaway prefix)' -Skip:(-not $script:smokeOn) {
-    It 'adds, lists, edits, renames and deletes a credential, and takes a full 2,560-byte secret' {
+    It 'adds, lists, edits, renames, reads, exports, imports and deletes, and takes a full 2,560-byte secret' {
         Set-LiteBackend $null
         Set-LitePrefix $script:smokePrefix
 
@@ -50,6 +50,18 @@ Describe 'Real Windows Credential Manager (throwaway prefix)' -Skip:(-not $scrip
         Set-LiteCredential -Service 'smoke' -Secret (ConvertTo-LiteTestSecure $full) | Out-Null
         $back = InModuleScope LazaretteLite { param($t) (& (Get-LiteBackend).Read $t).Secret } -Parameters @{ t = (Get-LiteCredential -Service 'smoke').Target }
         $back.Length | Should -Be 1280
+
+        Get-LiteSecret -Service 'smoke' | Should -Be $full
+
+        # Export carries no secret; importing it after a delete makes an empty placeholder.
+        $file = Join-Path $TestDrive 'smoke-export.json'
+        Export-LiteMetadata -Path $file | Out-Null
+        [IO.File]::ReadAllText($file) | Should -Not -Match 'xxxxxxxx'
+        Remove-LiteCredential -Service 'smoke' -Confirm:$false
+        @(Get-LiteCredential).Count | Should -Be 0
+        (Import-LiteMetadata -Path $file).Created | Should -Be 1
+        (Get-LiteCredential -Service 'smoke').HasSecret | Should -BeFalse
+        { Get-LiteSecret -Service 'smoke' } | Should -Throw '*no secret yet*'
 
         Remove-LiteCredential -Service 'smoke' -Confirm:$false
         @(Get-LiteCredential).Count | Should -Be 0
