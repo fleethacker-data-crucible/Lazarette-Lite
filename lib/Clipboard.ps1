@@ -55,9 +55,11 @@ function New-LiteWindowsClipboard {
 
 function Copy-LiteSecret {
     <#
-    .SYNOPSIS  Puts one secret on the clipboard, waits, then clears it. Press Ctrl+C to clear it early.
+    .SYNOPSIS
+        Puts one secret on the clipboard, waits, then clears it. Press Ctrl+C to clear it early.
     .PARAMETER ClearAfterSeconds  How long the secret stays on the clipboard. 5 to 300, default 20.
-    .OUTPUTS   Service, User, Seconds and Outcome (Cleared, ClipboardChanged or AlreadyEmpty). Never the secret.
+    .OUTPUTS
+        Service, User, Seconds and Outcome (Cleared, ClipboardChanged or AlreadyEmpty). Never the secret.
     #>
     [CmdletBinding()]
     param(

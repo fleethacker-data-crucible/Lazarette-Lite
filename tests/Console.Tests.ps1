@@ -50,7 +50,7 @@ Describe 'Console menu' {
     }
 
     It 'rejects an unknown choice and carries on' {
-        (Invoke-TestMenu 'zz', 'q').Text | Should -Match 'Pick a number from the menu'
+        (Invoke-TestMenu 'zz', 'q').Text | Should -Match 'Pick an option from the menu'
     }
 
     It 'adds an item, asking for the secret twice, and never prints it' {
@@ -176,5 +176,30 @@ Describe 'Console menu' {
 
     It 'stops when the console cannot be read, rather than looping' {
         { Invoke-TestMenu @() } | Should -Throw '*ran out of answers*'
+    }
+}
+
+Describe 'Console help' {
+    BeforeEach { Set-LiteBackend (New-LiteFakeBackend); Set-LitePrefix -Reset }
+
+    It 'shows help for h and ? and returns to the menu' {
+        foreach ($k in 'h', '?') {
+            $r = Invoke-TestMenu $k, 'q'
+            $r.Text | Should -Match 'keeps your credentials in Windows Credential Manager'
+            $r.Text | Should -Match 'Get-LiteSecret -Service gitlab'
+        }
+    }
+
+    It 'documents every key on the menu line' {
+        $menu = (Invoke-TestMenu 'q').Lines | Where-Object { $_ -match '^\s+(1 List|7 Export)' }
+        $keys = [regex]::Matches(($menu -join ' '), '(?<![A-Za-z])([0-9a-z]) [A-Z][a-z]+') | ForEach-Object { $_.Groups[1].Value }
+        $help = (Invoke-TestMenu 'h', 'q').Text
+        foreach ($k in $keys) { $help | Should -Match ("(?m)^\s+{0} \w+" -f [regex]::Escape($k)) }
+        @($keys).Count | Should -BeGreaterThan 10
+    }
+
+    It 'has a synopsis for every public command' {
+        $cmds = (Get-Module LazaretteLite).ExportedFunctions.Keys | Where-Object { $_ -notmatch '^Set-Lite(Backend|ClipboardBackend|ConsoleIO|RandomSource)$' }
+        foreach ($c in $cmds) { (Get-Help $c).Synopsis | Should -Not -Match "^\s*$c\s" -Because "$c needs a .SYNOPSIS" }
     }
 }
