@@ -25,7 +25,8 @@ function Resolve-LiteFilePath {
 
 function Export-LiteMetadata {
     <#
-    .SYNOPSIS  Writes the names, users and notes of your Lite credentials to a JSON file. Never the secrets.
+    .SYNOPSIS
+        Writes the names, users and notes of your Lite credentials to a JSON file. Never the secrets.
     #>
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Path, [switch]$Force)
@@ -87,8 +88,10 @@ function Read-LiteExportFile {
 
 function Import-LiteMetadata {
     <#
-    .SYNOPSIS  Creates a placeholder (no secret yet) for each name in an export file that you do not already have.
-    .DESCRIPTION  Existing entries are left alone and their secrets are never read. Fill each placeholder in with
+    .SYNOPSIS
+        Creates a placeholder (no secret yet) for each name in an export file that you do not already have.
+    .DESCRIPTION
+        Existing entries are left alone and their secrets are never read. Fill each placeholder in with
                   Set-LiteCredential -Secret. Get-LiteSecret refuses a placeholder until you do.
     #>
     [CmdletBinding(SupportsShouldProcess)]

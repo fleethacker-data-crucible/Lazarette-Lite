@@ -176,9 +176,32 @@ function Invoke-LiteCheck {
     Write-LiteLine ("  {0} problem{1}." -f $rows.Count, $(if ($rows.Count -eq 1) { '' } else { 's' }))
 }
 
+function Show-LiteHelp {
+    foreach ($l in @(
+            'Lazarette Lite keeps your credentials in Windows Credential Manager. Nothing else stores them.',
+            '',
+            '  1 List      shows service, user and note. Secrets are never shown.',
+            '  2 Search    matches service, user or note, ignoring case.',
+            '  3 Add       asks for the secret twice, hidden. Limit: 1,280 characters.',
+            '  4 Edit      blank keeps a value; "-" clears the note; a new secret is asked twice.',
+            '  5 Delete    you type the service name to confirm.',
+            '  6 Copy      puts the secret on the clipboard and clears it after 20 seconds (Ctrl+C clears now).',
+            '  7 Export    names and notes to a JSON file. Never secrets.',
+            '  8 Import    makes empty placeholders for names you lack; fill them in with Edit.',
+            '  9 Prefix    where Lite looks in Credential Manager (default lazarette-lite/).',
+            '  g Generate  adds an item with a random secret you never have to see.',
+            '  c Check     read-only report of items that may not work in scripts.',
+            '  h or ?      this help.',
+            '  q Quit      leaves the menu.',
+            '',
+            'In a script:  Import-Module .\LazaretteLite.psd1;  Get-LiteSecret -Service gitlab -User you',
+            'More:         Get-Help Get-LiteSecret -Full   (same for the other commands)')) { Write-LiteLine $l }
+}
+
 function Start-LiteConsole {
     <#
-    .SYNOPSIS  The Lazarette Lite menu. Quit with q.
+    .SYNOPSIS
+        The Lazarette Lite menu. Quit with q.
     #>
     [CmdletBinding()]
     param()
@@ -189,7 +212,7 @@ function Start-LiteConsole {
         Write-LiteLine ''
         Write-LiteLine ("Prefix {0}  ({1} item{2})" -f (Get-LitePrefix), $count, $(if ($count -eq 1) { '' } else { 's' }))
         Write-LiteLine '  1 List   2 Search   3 Add   4 Edit   5 Delete   6 Copy secret'
-        Write-LiteLine '  7 Export names   8 Import names   9 Prefix   g Generate   c Check   q Quit'
+        Write-LiteLine '  7 Export names   8 Import names   9 Prefix   g Generate   c Check   h Help   q Quit'
         # A failed read here (no console attached) ends the menu instead of looping on the error.
         $c = ([string](Read-LitePrompt 'Choose')).Trim().ToLowerInvariant()
         try {
@@ -205,8 +228,9 @@ function Start-LiteConsole {
                 '9' { Invoke-LitePrefix }
                 'g' { Invoke-LiteGenerate }
                 'c' { Invoke-LiteCheck }
+                { $_ -in 'h', '?', 'help' } { Show-LiteHelp }
                 { $_ -in 'q', '0', 'quit', 'exit' } { return }
-                default { Write-LiteLine '  Pick a number from the menu, or q to quit.' 'Yellow' }
+                default { Write-LiteLine '  Pick an option from the menu, h for help, or q to quit.' 'Yellow' }
             }
         } catch {
             Write-LiteLine ("  {0}" -f $_.Exception.Message) 'Red'

@@ -7,8 +7,10 @@
 
 function Test-LiteStore {
     <#
-    .SYNOPSIS  Reports problems with the credentials under the prefix. Returns one row per problem; no rows means healthy.
-    .OUTPUTS   Severity (Warning or Error), Service, User, Problem.
+    .SYNOPSIS
+        Reports problems with the credentials under the prefix. Returns one row per problem; no rows means healthy.
+    .OUTPUTS
+        Severity (Warning or Error), Service, User, Problem.
     .DESCRIPTION
         Error    the item cannot be read, or the stored name is not <prefix><service>/<user>.
         Warning  no secret yet (an import placeholder); secret has leading or trailing whitespace or a line break

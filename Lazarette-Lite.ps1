@@ -1,8 +1,10 @@
 #requires -Version 5.1
 <#
-.SYNOPSIS  Starts the Lazarette Lite console menu.
+.SYNOPSIS
+    Starts the Lazarette Lite console menu.
 .PARAMETER Prefix  Use this target prefix for this run instead of lazarette-lite/ (or LAZARETTE_LITE_PREFIX).
-.EXAMPLE   .\Lazarette-Lite.ps1
+.EXAMPLE
+    .\Lazarette-Lite.ps1
 #>
 param([string]$Prefix)
 
