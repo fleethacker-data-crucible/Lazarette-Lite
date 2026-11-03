@@ -1,0 +1,46 @@
+{
+  "name": "arc-ui",
+  "version": "5.1.0",
+  "private": true,
+  "description": "Lazarette browser UI: Svelte 5 + TypeScript, Tailwind CSS 4, bits-ui, ECharts, Svelte Flow, Motion. Built off-workstation into ../ui/dist.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "vite build",
+    "check": "svelte-check --tsconfig ./tsconfig.json --threshold error",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:e2e": "node tools/e2e.mjs",
+    "mock": "node ../dev/mock-arc.cjs",
+    "sandbox:setup": "node tools/sandbox/setup.mjs",
+    "sandbox:build": "node tools/sandbox/build.mjs",
+    "sandbox:test": "node tools/sandbox/unit.mjs",
+    "sandbox:e2e": "node tools/sandbox/e2e.mjs"
+  },
+  "dependencies": {
+    "@lucide/svelte": "1.54.0",
+    "@xyflow/svelte": "1.7.0",
+    "bits-ui": "2.19.5",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "echarts": "6.1.0",
+    "motion": "12.42.0",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "4.10.38",
+    "tailwind-merge": "3.6.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "^22.10.0",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@tailwindcss/vite": "4.3.3",
+    "svelte": "5.57.2",
+    "svelte-check": "4.7.5",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3",
+    "vite": "8.3.0",
+    "vitest": "5.0.3"
+  }
+}
