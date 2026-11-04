@@ -1,0 +1,16 @@
+# Lazarette Lite TechStack
+
+Lite follows the Fleet local web app stack and lifecycle.
+
+| Layer | Implementation |
+| --- | --- |
+| Launcher | `Launch-LazaretteLite.bat` invokes `Start-LazaretteLite.ps1` via Windows PowerShell 5.1. The normal launch hides the console. |
+| Server | PowerShell 5.1 and `TcpListener` on `127.0.0.1`. Host, Origin, process owner and browser session are checked. |
+| UI | Svelte 5, TypeScript, Tailwind 4, Bits UI, CVA and Lucide. Build off-workstation and serve bundled assets from `ui/dist`. |
+| Credentials | Current-user generic Windows credentials. Lite uses Credential Manager for secrets at rest. |
+| PDF forms | Bundled PDF.js worker. No PDF data is sent to the server. |
+| Native Windows | C# source compiled in memory by PowerShell `Add-Type` against Windows framework and OS APIs. |
+
+The browser sends heartbeats and a leaving beacon. Quit, the shell stop script and tab closure all stop the server between requests. One Windows session runs one instance per user. The launcher offers to replace an existing session and the build invokes the shell stop script first. Runtime files under `%LOCALAPPDATA%\Lazarette-Lite\logs` contain PID, port, URL and start time only.
+
+Release scripts follow the workstation's configured execution policy. Sign them for `AllSigned`. Lite runs without an installer, admin rights, outbound calls, or an update channel.

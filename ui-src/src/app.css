@@ -1,0 +1,309 @@
+@import 'tailwindcss' source('./');
+@import '../vendor/fleet/fleet.css';
+
+/* Lazarette design tokens, built on the shared Fleet tokens (vendor/fleet/fleet.css, docs/UNIFIED-UI.md):
+   Night watch / Chart room follow the system unless prefs set <html data-theme>. Components use the
+   semantic names (bg-card, text-muted-foreground, ring-ring ...); the --arc-* layer below only maps
+   Lazarette's roles onto --fl-* values, so no component carries a raw colour. */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@theme {
+  --font-sans: var(--fl-font-body);
+  --font-mono: var(--fl-font-mono);
+  --font-display: var(--fl-font-display);
+
+  --color-background: var(--arc-background);
+  --color-foreground: var(--arc-foreground);
+  --color-surface: var(--arc-surface);
+  --color-surface-2: var(--arc-surface-2);
+  --color-card: var(--arc-card);
+  --color-card-foreground: var(--arc-foreground);
+  --color-popover: var(--arc-popover);
+  --color-popover-foreground: var(--arc-foreground);
+  --color-muted: var(--arc-muted);
+  --color-muted-foreground: var(--arc-muted-foreground);
+  --color-subtle: var(--arc-subtle);
+  --color-border: var(--arc-border);
+  --color-border-strong: var(--arc-border-strong);
+  --color-input: var(--arc-input);
+  --color-ring: var(--arc-ring);
+  --color-primary: var(--arc-primary);
+  --color-primary-hover: var(--arc-primary-hover);
+  --color-primary-foreground: var(--arc-primary-foreground);
+  --color-brass: var(--fl-brass);
+  --color-info: var(--fl-info);
+  --color-primary-soft: var(--arc-primary-soft);
+  --color-accent: var(--arc-accent);
+  --color-accent-foreground: var(--arc-foreground);
+  --color-sky: var(--arc-sky);
+  --color-destructive: var(--arc-destructive);
+  --color-destructive-soft: var(--arc-destructive-soft);
+  --color-success: var(--arc-success);
+  --color-success-soft: var(--arc-success-soft);
+  --color-warning: var(--arc-warning);
+  --color-warning-soft: var(--arc-warning-soft);
+  --color-sidebar: var(--arc-sidebar);
+  --color-sidebar-active: var(--arc-sidebar-active);
+  --color-overlay: var(--arc-overlay);
+
+  --color-type-login: var(--arc-type-login);
+  --color-type-parameter: var(--arc-type-parameter);
+  --color-type-api: var(--arc-type-api);
+  --color-type-note: var(--arc-type-note);
+  --color-type-infrastructure: var(--arc-type-infrastructure);
+
+  /* Fleet radii: 6 controls, 10 cards, 14 dialogs. */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+
+  /* One shadow level for popovers and dialogs; cards use borders (Fleet section 5). */
+  --shadow-pop: var(--fl-shadow), 0 0 0 1px var(--arc-border);
+  --shadow-card: none;
+
+  --animate-fade-in: arc-fade-in 140ms ease-out;
+  --animate-scale-in: arc-scale-in 160ms cubic-bezier(0.2, 0.9, 0.25, 1);
+  --animate-slide-in-right: arc-slide-in-right 220ms cubic-bezier(0.2, 0.9, 0.25, 1);
+  --animate-slide-in-up: arc-slide-in-up 200ms cubic-bezier(0.2, 0.9, 0.25, 1);
+  --animate-shimmer: arc-shimmer 1.4s linear infinite;
+}
+
+:root {
+  --arc-background: var(--fl-background);
+  --arc-sidebar: var(--fl-sidebar);
+  --arc-sidebar-active: color-mix(in srgb, var(--fl-accent) 14%, var(--fl-sidebar));
+  --arc-surface: var(--fl-surface);
+  --arc-surface-2: color-mix(in srgb, var(--fl-surface) 55%, var(--fl-card));
+  --arc-card: var(--fl-card);
+  --arc-popover: var(--fl-popover);
+  --arc-muted: var(--fl-muted);
+  --arc-subtle: color-mix(in srgb, var(--fl-muted) 60%, var(--fl-border));
+  --arc-foreground: var(--fl-foreground);
+  --arc-muted-foreground: var(--fl-muted-foreground);
+  --arc-border: var(--fl-border);
+  --arc-border-strong: var(--fl-border-strong);
+  --arc-input: var(--fl-control-border);
+  --arc-ring: var(--fl-brass);
+  --arc-primary: var(--fl-accent);
+  --arc-primary-hover: color-mix(in srgb, var(--fl-accent) 86%, var(--fl-foreground));
+  --arc-primary-foreground: var(--fl-accent-ink);
+  --arc-primary-soft: color-mix(in srgb, var(--fl-accent) 16%, transparent);
+  --arc-accent: var(--fl-muted);
+  --arc-sky: var(--fl-info);
+  --arc-destructive: var(--fl-danger);
+  --arc-destructive-soft: color-mix(in srgb, var(--fl-danger) 14%, transparent);
+  --arc-success: var(--fl-success);
+  --arc-success-soft: color-mix(in srgb, var(--fl-success) 14%, transparent);
+  --arc-warning: var(--fl-warning);
+  --arc-warning-soft: color-mix(in srgb, var(--fl-warning) 14%, transparent);
+  --arc-overlay: color-mix(in srgb, var(--fl-background) 72%, transparent);
+  /* Item-type hues: the Fleet status/info colours, so they stay readable in both themes. */
+  --arc-type-login: var(--fl-info);
+  --arc-type-parameter: var(--fl-warning);
+  --arc-type-api: var(--fl-accent);
+  --arc-type-note: color-mix(in srgb, var(--fl-danger) 70%, var(--fl-info));
+  --arc-type-infrastructure: var(--fl-success);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html,
+  body {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  #app {
+    height: 100%;
+  }
+  ::selection {
+    background: rgb(109 93 252 / 0.35);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+  button,
+  [role='button'] {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-muted-foreground);
+    opacity: 0.75;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--arc-border-strong) transparent;
+  }
+  .font-mono,
+  code,
+  kbd {
+    font-variant-ligatures: none;
+  }
+}
+
+@layer components {
+  .arc-eyebrow {
+    font-size: 10.5px;
+    font-weight: 650;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+  }
+  .arc-skeleton {
+    background: linear-gradient(90deg, var(--arc-muted) 0%, var(--arc-subtle) 40%, var(--arc-muted) 80%);
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+    border-radius: var(--radius-md);
+  }
+  .arc-grid-bg {
+    background-image:
+      radial-gradient(ellipse 900px 420px at 50% -15%, color-mix(in oklab, var(--fl-accent) 10%, transparent), transparent 65%);
+  }
+  .arc-secret {
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
+    word-break: break-all;
+  }
+  /* Character colouring for revealed passwords: digits and symbols stand out. */
+  .arc-ch-digit {
+    color: var(--color-sky);
+  }
+  .arc-ch-symbol {
+    color: var(--color-warning);
+  }
+  .arc-totp-ring circle {
+    transition: stroke-dashoffset 1s linear;
+  }
+}
+
+@keyframes arc-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes arc-scale-in {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes arc-slide-in-right {
+  from { opacity: 0.4; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes arc-slide-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes arc-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+[data-reduced-motion='true'] *,
+[data-reduced-motion='true'] *::before,
+[data-reduced-motion='true'] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Printing recovery codes: only the codes block is printed. */
+@media print {
+  html[data-print='recovery'] body * {
+    visibility: hidden !important;
+  }
+  html[data-print='recovery'] .arc-print-area,
+  html[data-print='recovery'] .arc-print-area * {
+    visibility: visible !important;
+    color: #000 !important;
+  }
+  html[data-print='recovery'] .arc-print-area {
+    position: fixed;
+    inset: 24px;
+    border: 0;
+    background: #fff;
+  }
+}
+
+/* Svelte Flow (access package graph) themed with Lazarette tokens. */
+.svelte-flow {
+  --xy-background-color: transparent;
+  --xy-node-background-color: var(--arc-card);
+  --xy-node-border: 1px solid var(--arc-border-strong);
+  --xy-node-color: var(--arc-foreground);
+  --xy-edge-stroke: var(--arc-border-strong);
+  --xy-minimap-background-color: var(--arc-surface);
+  --xy-controls-button-background-color: var(--arc-popover);
+  --xy-controls-button-color: var(--arc-foreground);
+  --xy-controls-button-border-color: var(--arc-border);
+  --xy-controls-button-background-color-hover: var(--arc-muted);
+  --xy-attribution-background-color: transparent;
+}
+.svelte-flow .svelte-flow__node.arc-node {
+  width: 250px;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: left;
+  border-width: 1px;
+  background: var(--arc-card);
+  color: var(--arc-foreground);
+  box-shadow: none;
+}
+.svelte-flow .arc-node-root {
+  border-color: var(--arc-primary);
+  background: color-mix(in oklab, var(--arc-primary) 18%, var(--arc-card));
+  font-weight: 600;
+  width: 220px;
+}
+.svelte-flow .arc-node-ok {
+  border-color: color-mix(in oklab, var(--arc-success) 70%, transparent);
+}
+.svelte-flow .arc-node-warn {
+  border-color: color-mix(in oklab, var(--arc-warning) 70%, transparent);
+}
+.svelte-flow .arc-node-pending {
+  border-color: var(--arc-border-strong);
+  border-style: dashed;
+}
+.svelte-flow .arc-node-doc {
+  border-color: color-mix(in oklab, var(--arc-sky) 60%, transparent);
+}
+.svelte-flow .arc-node-claim {
+  border-color: color-mix(in oklab, var(--color-type-api) 60%, transparent);
+}
+.svelte-flow .svelte-flow__handle {
+  opacity: 0; /* read-only graph: no connection handles */
+}
+.svelte-flow .arc-edge-ok .svelte-flow__edge-path {
+  stroke: var(--arc-success);
+}
+.svelte-flow .arc-edge-dashed .svelte-flow__edge-path {
+  stroke-dasharray: 4 4;
+}

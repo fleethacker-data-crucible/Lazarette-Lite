@@ -1,58 +1,40 @@
 <p align="center">
-  <img src="assets/brand/emblem-transparent.png" width="280" alt="Lazarette Lite fleet emblem: a compact sailor lockbox and key, in navy, brass and ivory">
+  <img src="assets/brand/emblem-transparent.png" width="280" alt="Lazarette Lite emblem">
 </p>
 
 # Lazarette Lite
 
-**Your Windows credentials, without a new vault.** Lazarette Lite is a small front end to **Windows Credential Manager** for locked-down workstations. It reads, adds, updates and removes the current user's generic credentials, and gives scripts one way to fetch a secret by name.
+Lazarette Lite brings Lazarette's browser experience to Windows Credential Manager. It manages the current Windows user's generic credentials and supplies named secrets to Fleet tools.
 
-It is the deliberately small sibling of [Lazarette](https://github.com/fleethacker-data-crucible/Lazarette), the full-featured encrypted vault. Lite exists so a team can manage and share credentials with scripts **without bringing a new data store, new cryptography or a network service onto the workstation**. Whether that keeps it inside the workstation's existing authorization is for the ISSM to decide. The design below aims to make that an easy call.
+## Use it
 
-> **Status:** empty scaffold. Nothing is built yet.
+Double-click `Launch-LazaretteLite.bat`. The browser opens on a private, temporary loopback session. Use `--console` to keep launch diagnostics visible, or `--credential-console` for the terminal credential menu, including metadata-only import and export. Use `--replace` to restart an existing session without a prompt, `--stay` or `LAZARETTE_LITE_AUTO_STOP=0` to keep it alive after the tab closes, and `Stop-LazaretteLite.ps1` to stop it from the shell.
 
-## Design rules
+The browser supports searching, favourites for the current session, adding and editing credentials, revealing and copying secrets, password and passphrase generation, and read-only PDF form extraction. PDF.js reads AcroForm and supported XFA fields inside a browser worker. Files and extracted values stay in that tab. Test the specific XFA forms needed for the demo.
 
-These rules are the point of Lite. A change that breaks one belongs in Lazarette, not here.
+## Fleet demo setup
 
-| Rule | Why |
-| --- | --- |
-| **No data store of its own.** Every secret lives in Windows Credential Manager. | No new file format to review, nothing extra to back up or protect. |
-| **No custom cryptography.** Windows protects the secrets with DPAPI, under the user's account. | No crypto code for an assessor to evaluate. |
-| **No network.** No outbound calls, no update channel, no telemetry. | Nothing leaves the machine. |
-| **No installs, no admin rights, no DLLs.** Windows PowerShell 5.1 only; any C# ships as source and is compiled with `Add-Type`. | Runs under application control the same way the rest of the Fleet does. |
-| **Signed scripts.** Every script is Authenticode-signed for release. | It can run under an `AllSigned` execution policy. |
-| **Current user only.** It never reads another account's credentials. | It stays inside what Windows already allows the user to do. |
-| **Small.** It should stay readable in one sitting. | Easy to review and to keep reviewed. |
+Create the services the demo tools already expect, then wrap your usual Fleet launcher:
 
-## Planned scope
+```powershell
+.\Start-LiteFleet.ps1 -Launcher C:\Demo\Start-Fleet.cmd
+```
 
-- List, search, add, edit and delete the current user's **generic** credentials, under a configurable target prefix (for example `lazarette-lite/`).
-- `Get-LiteSecret -Name <name>` for scripts, mirroring Lazarette's `Get-ArcSecret` so a script can later move to the full vault unchanged.
-- Copy a secret to the clipboard, cleared automatically after a short time.
-- An export and import file for moving names and metadata between machines, **never** the secrets themselves.
+The wrapper sets `LAZARETTE_PATH` and `ARC_PATH` for the launch and its children. The `lib\Lazarette.ps1` and `lib\Arc.ps1` loaders support both generations of secret lookup with `-Service` and optional `-User`. The compatibility unlock calls check provider access under the current Windows session. The Lite-specific module exports `Get-LiteSecret` directly.
 
-## Not in Lite (use Lazarette)
+Custom vault fields and full Lazarette's Fairlead peer API require separate integration.
 
-These belong in Lazarette instead:
-- the encrypted vault and its version history;
-- attachments;
-- the authenticator app and second factor;
-- smart-card unlock;
-- the PDF form filler;
-- access packages;
-- the assistant;
-- sharing between users;
-- signed self-updates.
+## Authorization boundary
 
-## Open questions
+- Secrets are generic Windows credentials in the current user's store. Windows handles storage and protection. Lite ships no vault engine, encrypted files, or custom vault cryptography.
+- The loopback listener binds to `127.0.0.1` on a Windows-assigned port. It checks the process owner's Windows SID, the Host and Origin, a one-time launch token, and a browser session cookie. API responses use `Cache-Control: no-store`.
+- Lite makes no outbound requests. The browser assets, PDF worker, fonts, and character maps are served locally. The server stops after Quit or when the browser session goes away.
+- Windows PowerShell 5.1 and a browser run the prebuilt app. No admin install or Node runtime is needed on the demo workstation. Sign the PowerShell release files for workstations using `AllSigned`.
 
-1. **User interface.**
-   - Option A, the Fleet pattern: a browser UI on `127.0.0.1`.
-   - Option B, the smaller footprint: a console or WinForms UI with **no listener at all**.
-   - B is easier to defend for authorization; A matches the rest of the Fleet.
-2. **Credential Manager limits.** Each secret is limited to about 2.5 KB, and enterprise policy may restrict roaming. Confirm both on the target workstation.
-3. **Prefix and naming.** These need to match Lazarette's Credential Manager bridge, so the two can coexist on one machine.
+Workstation application control and the ISSM's authorization decision still apply.
 
-## License
+## Build
+
+From `ui-src`, run `npm ci`, `npm run check`, and `npm run build`. The runtime serves the generated files in `ui/dist`.
 
 MIT. See [LICENSE](LICENSE).

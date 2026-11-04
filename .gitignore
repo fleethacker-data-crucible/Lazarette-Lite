@@ -21,3 +21,6 @@ Desktop.ini
 .vs/
 .vscode/*
 .claude/
+
+# Browser build dependencies (built assets in ui/dist are shipped)
+node_modules/
