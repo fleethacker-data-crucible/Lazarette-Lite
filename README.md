@@ -33,6 +33,21 @@ Custom vault fields and full Lazarette's Fairlead peer API require separate inte
 
 Workstation application control and the ISSM's authorization decision still apply.
 
+## Signing
+
+Release scripts are meant to be Authenticode-signed so they run under an `AllSigned` execution policy. This repository contains no certificate and nothing in it is signed. The signing step is scripted but has not been run against a real certificate:
+
+```powershell
+# On the release machine, with a code-signing certificate in Cert:\CurrentUser\My, after the final edit:
+.\scripts\Sign-Release.ps1 -Thumbprint <thumbprint> -TimestampServer <your timestamp url>
+.\scripts\Sign-Release.ps1 -Verify      # exit code 1 unless every script is validly signed
+```
+
+- It signs the root and `lib\` scripts (`.ps1`, `.psm1`, `.psd1`), not `tests\` or `scripts\`. The `.cmd` and `.bat` launchers are not checked by PowerShell policy, so they are not signed.
+- Any edit after signing, even a line ending, breaks the signature. `.gitattributes` pins line endings so a checkout does not change the signed bytes.
+- The timestamp server is the only network use. It happens once on the release machine, never at run time.
+- Only `-Verify` and the refusal paths are tested, because there is no certificate to test the signing path with.
+
 ## Build
 
 From `ui-src`, run `npm ci`, `npm run check`, and `npm run build`. The runtime serves the generated files in `ui/dist`.
