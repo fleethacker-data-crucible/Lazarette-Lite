@@ -18,9 +18,12 @@
 
 function Get-LiteSecret {
     <#
-    .SYNOPSIS  Returns the secret of exactly one item, as a string. Throws if it is missing, ambiguous or empty.
-    .EXAMPLE   $token = Get-LiteSecret -Service gitlab -User anthony
-    .EXAMPLE   $token = Get-LiteSecret -Name gitlab        # -Name is the same as -Service
+    .SYNOPSIS
+        Returns the secret of exactly one item, as a string. Throws if it is missing, ambiguous or empty.
+    .EXAMPLE
+        $token = Get-LiteSecret -Service gitlab -User anthony
+    .EXAMPLE
+        $token = Get-LiteSecret -Name gitlab        # -Name is the same as -Service
     #>
     [CmdletBinding()]
     param(
@@ -38,7 +41,10 @@ function Get-LiteSecret {
 }
 
 function Get-LiteItemNames {
-    # Same shape as Get-ArcItemNames: service, user, type, tags. Names only, never secrets.
+    <#
+    .SYNOPSIS
+        Lists service, user, type and tags, like Get-ArcItemNames. Names only, never secrets.
+    #>
     [CmdletBinding()]
     param()
     return @(Get-LiteCredential | ForEach-Object { [pscustomobject]@{ Service = $_.Service; User = $_.User; Type = 'login'; Tags = @() } })
