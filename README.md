@@ -8,21 +8,23 @@ Lazarette Lite brings Lazarette's browser experience to Windows Credential Manag
 
 ## Use it
 
-Double-click `Launch-LazaretteLite.bat`. The browser opens on a private, temporary loopback session. Use `--console` to keep launch diagnostics visible, or `--credential-console` for the terminal credential menu, including metadata-only import and export. Use `--replace` to restart an existing session without a prompt, `--stay` or `LAZARETTE_LITE_AUTO_STOP=0` to keep it alive after the tab closes, and `Stop-LazaretteLite.ps1` to stop it from the shell.
+Double-click `Launch-LazaretteLite.bat`. The browser opens on a private, temporary loopback session. The launcher runs Windows PowerShell 5.1 with a process-scoped `-ExecutionPolicy Bypass`, like the other Fleet launchers, so the default Windows policy does not refuse the hidden script; it changes no machine setting. Use `--console` to keep launch diagnostics visible, or `--credential-console` for the terminal credential menu, including metadata-only import and export. Use `--replace` to restart an existing session without a prompt, `--stay` or `LAZARETTE_LITE_AUTO_STOP=0` to keep it alive after the tab closes, and `Stop-LazaretteLite.ps1` to stop it from the shell.
 
 The browser supports searching, favourites for the current session, adding and editing credentials, revealing and copying secrets, password and passphrase generation, and read-only PDF form extraction. PDF.js reads AcroForm and supported XFA fields inside a browser worker. Files and extracted values stay in that tab. Test the specific XFA forms needed for the demo.
 
-## Fleet demo setup
+## Fleet tools: Lite in place of Lazarette
 
-Create the services the demo tools already expect, then wrap your usual Fleet launcher:
+Fleet tools (Halyard, Eight Bells, Semaphore, TalkForge and others) load Lazarette through one contract (Lazarette `docs/INTEGRATION.md`): the folder named by `LAZARETTE_PATH` (TalkForge: `ARC_PATH`), else a folder called `Lazarette` next to the tool, else `%USERPROFILE%\Projects\Lazarette`, must hold `lib\Lazarette.ps1`, which defines `Unlock-LazaretteVaultInteractive`, `Test-LazaretteVaultUnlocked`, `Get-LazaretteSecret`, `Get-LazaretteItemNames` and `Lock-LazaretteVault`. Lite's `lib\Lazarette.ps1` (and `lib\Arc.ps1` for the older names) answers all of them from Windows Credential Manager, so the tools work unchanged and without Lazarette installed. Register once per Windows user:
 
 ```powershell
-.\Start-LiteFleet.ps1 -Launcher C:\Demo\Start-Fleet.cmd
+.\Register-LazaretteLite.ps1          # or: Launch-LazaretteLite.bat --register
 ```
 
-The wrapper sets `LAZARETTE_PATH` and `ARC_PATH` for the launch and its children. The `lib\Lazarette.ps1` and `lib\Arc.ps1` loaders support both generations of secret lookup with `-Service` and optional `-User`. The compatibility unlock calls check provider access under the current Windows session. The Lite-specific module exports `Get-LiteSecret` directly.
+It sets `LAZARETTE_PATH`, `ARC_PATH` and `GANGPLANK_LAZARETTE_PATH` in your user environment to this folder (no admin, nothing installed). A variable that already points at a working full Lazarette is left alone unless you pass `-Force`; `-Unregister` undoes the registration; `-WhatIf` shows what would change. Tools already open keep their old environment, so start them again. For one launch only, without saving anything, `.\Start-LiteFleet.ps1 -Launcher C:\Demo\Start-Fleet.cmd` sets the same variables for that process and its children.
 
-Custom vault fields and full Lazarette's Fairlead peer API require separate integration.
+What a tool sees: there is no lock, so nothing prompts and the vault counts as unlocked whenever Credential Manager can be read; an item has one secret, so `-Field` fails the way Lazarette fails for a field an item does not have; an item with no secret yet throws instead of returning an empty string. Create the items the tools expect (the names in Lazarette's `docs/FLEET-ITEMS.md`, for example `ai-api-key` for Eight Bells or `talkforge-api` for TalkForge). Fairlead needs no registration: it reads Lite's items straight from Credential Manager under the `lazarette-lite/` prefix, so keep the default prefix for the names Fairlead asks for.
+
+`tools\lazarette.ps1` answers the `status`, `items`, `get` and `check` verbs of Lazarette's command line with the same output shapes and exit codes. `totp`, `run`, custom fields and Lazarette's Fairlead peer API need the full Lazarette.
 
 ## Authorization boundary
 
@@ -43,7 +45,7 @@ Release scripts are meant to be Authenticode-signed so they run under an `AllSig
 .\scripts\Sign-Release.ps1 -Verify      # exit code 1 unless every script is validly signed
 ```
 
-- It signs the root and `lib\` scripts (`.ps1`, `.psm1`, `.psd1`), not `tests\` or `scripts\`. The `.cmd` and `.bat` launchers are not checked by PowerShell policy, so they are not signed.
+- It signs the root scripts (`.ps1`, `.psm1`, `.psd1`), `lib\` with `lib\server\`, and `tools\`, not `tests\` or `scripts\`. The `.cmd` and `.bat` launchers are not checked by PowerShell policy, so they are not signed.
 - Any edit after signing, even a line ending, breaks the signature. `.gitattributes` pins line endings so a checkout does not change the signed bytes.
 - The timestamp server is the only network use. It happens once on the release machine, never at run time.
 - Only `-Verify` and the refusal paths are tested, because there is no certificate to test the signing path with.

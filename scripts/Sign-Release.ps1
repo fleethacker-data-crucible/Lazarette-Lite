@@ -3,7 +3,7 @@
 .SYNOPSIS  Authenticode-signs the Lazarette Lite scripts for release, or checks that they are signed.
 .DESCRIPTION
     Release scripts are meant to run under an AllSigned execution policy. This script signs every shipped
-    .ps1, .psm1 and .psd1 (the root files and lib\; not tests\ or scripts\) with a code-signing certificate
+    .ps1, .psm1 and .psd1 (the root files, lib\ with lib\server\, and tools\; not tests\ or scripts\) with a code-signing certificate
     that YOU hold. The repository contains no certificate and no private key, and this script never
     exports or copies one: it only asks Windows to sign with the certificate in your own store.
 
@@ -26,8 +26,11 @@ param(
 
 $files = @(
     Get-ChildItem -LiteralPath $Root -File | Where-Object { $_.Extension -in '.ps1', '.psm1', '.psd1' }
-    $lib = Join-Path $Root 'lib'
-    if (Test-Path -LiteralPath $lib) { Get-ChildItem -LiteralPath $lib -File -Filter '*.ps1' }
+    # lib\ recursively: Start-LazaretteLite.ps1 dot-sources lib\server\*.ps1, which AllSigned would refuse unsigned.
+    foreach ($sub in 'lib', 'tools') {
+        $dir = Join-Path $Root $sub
+        if (Test-Path -LiteralPath $dir) { Get-ChildItem -LiteralPath $dir -File -Recurse -Filter '*.ps1' }
+    }
 )
 if ($files.Count -eq 0) { throw "No scripts found under '$Root'." }
 

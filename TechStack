@@ -4,7 +4,8 @@ Lite follows the Fleet local web app stack and lifecycle.
 
 | Layer | Implementation |
 | --- | --- |
-| Launcher | `Launch-LazaretteLite.bat` invokes `Start-LazaretteLite.ps1` via Windows PowerShell 5.1. The normal launch hides the console. |
+| Launcher | `Launch-LazaretteLite.bat` invokes `Start-LazaretteLite.ps1` via Windows PowerShell 5.1. The normal launch hides the console. `-ExecutionPolicy Bypass` is process-scoped, like the Lazarette and Gangplank launchers. |
+| Fleet integration | `lib\Lazarette.ps1` and `lib\Arc.ps1` answer the Lazarette 5 integration contract; `Register-LazaretteLite.ps1` points `LAZARETTE_PATH`, `ARC_PATH` and `GANGPLANK_LAZARETTE_PATH` at this folder in the user environment; `tools\lazarette.ps1` answers Lazarette's command line (status, items, get, check). |
 | Server | PowerShell 5.1 and `TcpListener` on `127.0.0.1`. Host, Origin, process owner and browser session are checked. |
 | UI | Svelte 5, TypeScript, Tailwind 4, Bits UI, CVA and Lucide. Build off-workstation and serve bundled assets from `ui/dist`. |
 | Credentials | Current-user generic Windows credentials. Lite uses Credential Manager for secrets at rest. |

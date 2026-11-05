@@ -11,21 +11,21 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-foreach ($option in $Options) {
-    switch ($option) {
-        '--console' { $ShowConsole = $true }
-        '--no-browser' { $NoBrowser = $true }
-        '--stay' { $Stay = $true }
-        '--replace' { $Replace = $true }
-        '--credential-console' { $CredentialConsole = $true }
-        default { throw "Unknown Lazarette Lite option: $option" }
-    }
-}
-
 $instance = $null
 $locked = $false
 $runtime = $null
 try {
+    # Inside the try: Launch-LazaretteLite.bat runs this hidden, so a bad option must reach the message box below.
+    foreach ($option in $Options) {
+        switch ($option) {
+            '--console' { $ShowConsole = $true }
+            '--no-browser' { $NoBrowser = $true }
+            '--stay' { $Stay = $true }
+            '--replace' { $Replace = $true }
+            '--credential-console' { $CredentialConsole = $true }
+            default { throw "Unknown Lazarette Lite option: $option (use --console, --no-browser, --stay, --replace, --credential-console; --register and --unregister go to Launch-LazaretteLite.bat)" }
+        }
+    }
     Import-Module (Join-Path $PSScriptRoot 'LazaretteLite.psd1')
     if ($Prefix) { Set-LitePrefix $Prefix | Out-Null }
     if ($CredentialConsole) { Start-LiteConsole; return }
