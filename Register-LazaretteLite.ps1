@@ -14,7 +14,8 @@
     GANGPLANK_LAZARETTE_PATH  Gangplank, which only ever uses a folder it was explicitly given
   A variable that already points at a working Lazarette (a folder with lib\Lazarette.ps1 that is not this one)
   is left alone unless -Force is given: the full Lazarette wins when it is installed. A variable that is unset,
-  or that points at a folder which no longer has lib\Lazarette.ps1, is set. -Unregister removes the variables
+  or that points at a folder which no longer has the loader it needs (lib\Lazarette.ps1; lib\Arc.ps1 for
+  ARC_PATH), is set. -Unregister removes the variables
   that point at this folder and leaves every other value alone.
   Tools already open keep their old environment; start them again.
 .PARAMETER Scope
@@ -45,11 +46,13 @@ function Get-LiteRegistrationFolder {
 }
 
 function Test-LiteRegistrationTarget {
-    # Does this value point at a usable install (a folder with lib\Lazarette.ps1)?
-    param([string]$Value)
+    # Does this value point at a usable install for the variable? TalkForge reads ARC_PATH and needs lib\Arc.ps1,
+    # which the full Lazarette does not ship; every other variable needs lib\Lazarette.ps1.
+    param([string]$Value, [string]$Variable)
     $folder = Get-LiteRegistrationFolder $Value
     if (-not $folder) { return $false }
-    try { return (Test-Path -LiteralPath (Join-Path $folder 'lib\Lazarette.ps1') -PathType Leaf) } catch { return $false }
+    $loader = 'lib\Lazarette.ps1'; if ($Variable -eq 'ARC_PATH') { $loader = 'lib\Arc.ps1' }
+    try { return (Test-Path -LiteralPath (Join-Path $folder $loader) -PathType Leaf) } catch { return $false }
 }
 
 function Test-LiteRegistrationIsThisFolder {
@@ -70,7 +73,7 @@ $rows = foreach ($name in $variables) {
         $action = 'already set'
     } elseif ([string]::IsNullOrWhiteSpace($current)) {
         $action = 'set'; $value = $root
-    } elseif (Test-LiteRegistrationTarget $current) {
+    } elseif (Test-LiteRegistrationTarget $current $name) {
         if ($Force) { $action = 'replaced (-Force)'; $value = $root } else { $action = 'kept (another Lazarette; -Force overrides)' }
     } else {
         $action = 'replaced (stale: no lib\Lazarette.ps1 there)'; $value = $root

@@ -32,6 +32,11 @@ Describe 'Register-LazaretteLite.ps1 (process scope)' {
         & $script:register -Scope Process -Force 6>$null | Out-Null
         [Environment]::GetEnvironmentVariable('LAZARETTE_PATH', 'Process') | Should -Be $script:root
     }
+    It 'treats ARC_PATH at a folder without lib\Arc.ps1 (the full Lazarette) as unusable and replaces it' {
+        [Environment]::SetEnvironmentVariable('ARC_PATH', $script:other, 'Process')
+        & $script:register -Scope Process 6>$null | Out-Null
+        [Environment]::GetEnvironmentVariable('ARC_PATH', 'Process') | Should -Be $script:root
+    }
     It 'replaces a stale value whose folder has no loader' {
         [Environment]::SetEnvironmentVariable('LAZARETTE_PATH', (Join-Path $TestDrive 'gone'), 'Process')
         & $script:register -Scope Process 6>$null | Out-Null
