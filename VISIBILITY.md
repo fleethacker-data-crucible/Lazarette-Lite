@@ -1,5 +1,5 @@
-public-candidate
+public
 
-Empty scaffold, sibling of Lazarette. Public status not yet confirmed.
+Lazarette Lite brings Lazarette's browser experience to Windows Credential Manager.
 
 FleetHacker visibility marker. First line is the machine value, exactly one of: internal-only | public-candidate | public. Change this file by PR only. A visibility change itself still needs Jeremy's explicit yes, relayed through the Chief of Staff, per TEAM-DIRECTIVES.md.
