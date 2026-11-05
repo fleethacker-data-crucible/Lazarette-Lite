@@ -6,9 +6,10 @@ Describe 'Sign-Release.ps1 -Verify' {
     BeforeAll {
         $script:script = Join-Path (Split-Path -Parent $PSScriptRoot) 'scripts\Sign-Release.ps1'
         $script:fake = Join-Path $TestDrive 'pkg'
-        New-Item -ItemType Directory -Path (Join-Path $script:fake 'lib') | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $script:fake 'lib\server') -Force | Out-Null
         Set-Content -LiteralPath (Join-Path $script:fake 'a.ps1') -Value 'Write-Output 1'
         Set-Content -LiteralPath (Join-Path $script:fake 'lib\b.ps1') -Value 'Write-Output 2'
+        Set-Content -LiteralPath (Join-Path $script:fake 'lib\server\c.ps1') -Value 'Write-Output 3'
         Set-Content -LiteralPath (Join-Path $script:fake 'ignored.txt') -Value 'not a script'
     }
 
@@ -18,7 +19,8 @@ Describe 'Sign-Release.ps1 -Verify' {
         $out | Should -Match 'NotSigned'
         $out | Should -Match 'a\.ps1'
         $out | Should -Match 'lib\\b\.ps1'
-        $out | Should -Match '2 of 2 files are not validly signed'
+        $out | Should -Match 'lib\\server\\c\.ps1'
+        $out | Should -Match '3 of 3 files are not validly signed'
         $out | Should -Not -Match 'ignored\.txt'
     }
 

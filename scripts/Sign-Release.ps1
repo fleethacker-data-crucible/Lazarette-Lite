@@ -27,7 +27,7 @@ param(
 $files = @(
     Get-ChildItem -LiteralPath $Root -File | Where-Object { $_.Extension -in '.ps1', '.psm1', '.psd1' }
     $lib = Join-Path $Root 'lib'
-    if (Test-Path -LiteralPath $lib) { Get-ChildItem -LiteralPath $lib -File -Filter '*.ps1' }
+    if (Test-Path -LiteralPath $lib) { Get-ChildItem -LiteralPath $lib -File -Recurse | Where-Object { $_.Extension -in '.ps1', '.psm1', '.psd1' } }
 )
 if ($files.Count -eq 0) { throw "No scripts found under '$Root'." }
 
