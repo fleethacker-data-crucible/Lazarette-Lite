@@ -62,7 +62,7 @@ try {
     Start-ArcHttpServer -PreferredPort 0 -UiRoot $dist -StopSignal $instance.Stop -AutoStop (-not $Stay -and $env:LAZARETTE_LITE_AUTO_STOP -ne '0') -OnReady {
         param($Url)
         $base = ([uri]$Url).GetLeftPart([UriPartial]::Authority)
-        @{ pid = $PID; port = ([uri]$base).Port; url = $base; started = [DateTime]::UtcNow.ToString('o') } |
+        @{ pid = $PID; port = ([uri]$base).Port; url = $base; started = [DateTime]::UtcNow.ToString('o'); app = 'lazarette-lite'; version = (Get-Module LazaretteLite).Version.ToString(); root = $PSScriptRoot } |
             ConvertTo-Json -Compress | Set-Content -LiteralPath $runtime -Encoding UTF8
         if ($NoBrowser) { Write-Output $Url } else { Start-Process $Url }
     }
