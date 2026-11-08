@@ -24,6 +24,37 @@ The wrapper sets `LAZARETTE_PATH` and `ARC_PATH` for the launch and its children
 
 Custom vault fields and full Lazarette's Fairlead peer API require separate integration.
 
+## Lite vs Lazarette
+
+| Capability | Lazarette Lite | Lazarette |
+| --- | --- | --- |
+| Secret by name (`Get-LiteSecret` / `Get-LazaretteSecret`) | Yes | Yes |
+| Custom fields (`-Field`) | No â€” always throws | Yes |
+| TOTP / authenticator codes | No | Yes |
+| Attachments | No | Yes |
+| Item history | No | Yes |
+| Fairlead peer API (`POST /peer/fairlead/v1/secrets`) | No â€” needs full Lazarette | Yes |
+
+### Fallback: full Lazarette first, Lite second
+
+`Get-FleetSecret -Service <name> [-User <user>] [-Field <field>]` (lib/Resolver.ps1)
+tries, in order, for each item:
+
+1. Full Lazarette, when a Lazarette checkout is found â€” `$env:LAZARETTE_PATH`,
+   `$env:ARC_PATH`, or a `Lazarette` folder next to this repo â€” and its vault unlocks.
+2. Lazarette Lite (Windows Credential Manager under the Lite prefix).
+
+If neither store has the item, the error names both stores and the item. When Lite
+answers, `-Field` still throws: Lite keeps one secret per item, so a field can only
+come from full Lazarette. The Fairlead peer route is not part of Lite; a peer that
+needs it must talk to full Lazarette.
+
+To move secrets from Lazarette into Lite, export the unlocked vault from Lazarette
+as CSV and run `Import-LiteFromLazaretteCsv -Path <export.csv>` (lib/Transfer.ps1).
+Only `name`, `username`, `password` (and `note`, as the comment) are imported;
+TOTP, folders, types and custom fields are left out. The CSV file is plaintext by
+Lazarette's design â€” delete it after the import.
+
 ## Authorization boundary
 
 - Secrets are generic Windows credentials in the current user's store. Windows handles storage and protection. Lite ships no vault engine, encrypted files, or custom vault cryptography.
