@@ -116,3 +116,103 @@ function Import-LiteMetadata {
         Items   = $rows
     }
 }
+
+# --- Lazarette CSV migration -------------------------------------------------
+# A user exports their unlocked Lazarette vault to CSV themselves
+# (POST /api/export, format 'csv') and imports that file here. Lazarette writes
+# the header: name,url,username,password,note,totp,folder,type,fields
+# (Lazarette lib/vault/Interop.ps1, ConvertTo-LazaretteExportCsv). Only
+# name/username/password are read, plus note as the comment; url, totp, folder,
+# type and fields are ignored because Lite keeps one secret per item and has no
+# fields, TOTP or attachments. CSV only: a lazarette-transfer-v1 file is
+# encrypted and is refused, never decrypted. The per-item report carries
+# service/user/status only â€” never a secret. The CSV file itself is plaintext
+# by Lazarette's design; delete it after the import.
+$script:LiteCsvMaxBytes = 5MB
+
+function Get-LiteCsvValue {
+    param($Row, [string]$Column)
+    $p = $Row.PSObject.Properties | Where-Object { $_.Name -ieq $Column } | Select-Object -First 1
+    if ($null -eq $p -or $null -eq $p.Value) { return '' }
+    return [string]$p.Value
+}
+
+function Get-LiteCsvSkipReason {
+    # Maps a validation failure to a skip status: size problems are oversize, the rest invalid.
+    param([string]$Message)
+    if ($Message -match 'bytes|limit|characters') { return 'skipped-oversize' }
+    return 'skipped-invalid'
+}
+
+function Import-LiteFromLazaretteCsv {
+    <#
+    .SYNOPSIS
+        Imports secrets from a Lazarette CSV export into Lazarette Lite.
+    .DESCRIPTION
+        You export from unlocked Lazarette yourself (POST /api/export, format 'csv').
+        Only name/username/password (and note, as the comment) are imported; TOTP,
+        folders, types and custom fields are left out. A lazarette-transfer-v1 file
+        is encrypted and is refused, never decrypted. The per-item report carries
+        service/user/status only â€” never a secret.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [string]$ServiceColumn = 'name',
+        [string]$UserColumn = 'username',
+        [string]$SecretColumn = 'password',
+        [string]$NoteColumn = 'note'
+    )
+    $full = Resolve-LiteFilePath $Path
+    if ([IO.Path]::GetExtension($full) -ine '.csv') { throw "'$full' is not a .csv file. Export from Lazarette as CSV (format 'csv'); a lazarette-transfer file is encrypted and cannot be imported here." }
+    if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { throw "No CSV file at '$full'." }
+    if ((Get-Item -LiteralPath $full).Length -gt $script:LiteCsvMaxBytes) { throw "'$full' is larger than 5 MB. Split the export and import it in parts." }
+    $first = Get-Content -LiteralPath $full -TotalCount 1 -ErrorAction Stop
+    if ($null -eq $first -or $first.TrimStart().StartsWith('{')) { throw "'$full' does not look like a CSV file (no header row, or JSON â€” export as CSV, not Bitwarden JSON or lazarette-transfer)." }
+    try { $rows = @(Import-Csv -LiteralPath $full -Encoding UTF8 -ErrorAction Stop) }
+    catch { throw "The CSV file '$full' could not be read: $($_.Exception.Message)" }
+    if ($rows.Count -eq 0) { throw "'$full' has a header row but no data rows." }
+    $cols = @($rows[0].PSObject.Properties.Name)
+    $missing = @()
+    foreach ($c in @($ServiceColumn, $UserColumn, $SecretColumn)) { if ($cols -inotcontains $c) { $missing += $c } }
+    if ($missing.Count -gt 0) { throw "The CSV has no column(s): $($missing -join ', '). Lazarette CSV exports use name, username, password (header: name,url,username,password,note,totp,folder,type,fields); pass -ServiceColumn/-UserColumn/-SecretColumn to map other headers. Found: $($cols -join ', ')." }
+    $have = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+    Get-LiteCredential | ForEach-Object { [void]$have.Add($_.Target) }
+    $out = New-Object 'System.Collections.Generic.List[object]'
+    foreach ($row in $rows) {
+        $svc = Get-LiteCsvValue $row $ServiceColumn
+        $usr = Get-LiteCsvValue $row $UserColumn
+        $sec = Get-LiteCsvValue $row $SecretColumn
+        $note = if ($cols -icontains $NoteColumn) { Get-LiteCsvValue $row $NoteColumn } else { '' }
+        $status = 'imported'
+        if ([string]::IsNullOrWhiteSpace($svc) -or [string]::IsNullOrWhiteSpace($sec)) { $status = 'skipped-empty' }
+        else {
+            $target = $null
+            try { $target = Get-LiteTarget $svc $usr } catch { $status = Get-LiteCsvSkipReason $_.Exception.Message }
+            if ($status -eq 'imported') {
+                if ($have.Contains($target)) { $status = 'skipped-duplicate' }
+                elseif ([Text.Encoding]::Unicode.GetByteCount($sec) -gt $script:LiteMaxSecretBytes) { $status = 'skipped-oversize' }
+                elseif ($note.Length -gt $script:LiteMaxComment) { $status = 'skipped-invalid' }
+                else {
+                    $ss = $null
+                    try {
+                        $ss = ConvertTo-SecureString -String $sec -AsPlainText -Force
+                        Add-LiteCredential -Service $svc -User $usr -Secret $ss -Comment $note | Out-Null
+                        [void]$have.Add($target)
+                    } catch { $status = Get-LiteCsvSkipReason $_.Exception.Message }
+                    finally { if ($ss) { $ss.Dispose() } $sec = $null }
+                }
+            }
+        }
+        $out.Add([pscustomobject]@{ Service = $svc; User = $usr; Status = $status })
+    }
+    $items = @($out.ToArray())
+    [pscustomobject]@{
+        Imported         = @($items | Where-Object { $_.Status -eq 'imported' }).Count
+        SkippedOversize  = @($items | Where-Object { $_.Status -eq 'skipped-oversize' }).Count
+        SkippedEmpty     = @($items | Where-Object { $_.Status -eq 'skipped-empty' }).Count
+        SkippedDuplicate = @($items | Where-Object { $_.Status -eq 'skipped-duplicate' }).Count
+        SkippedInvalid   = @($items | Where-Object { $_.Status -eq 'skipped-invalid' }).Count
+        Items            = $items
+    }
+}

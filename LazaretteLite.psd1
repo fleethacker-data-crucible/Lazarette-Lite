@@ -12,9 +12,11 @@
         'Start-LiteConsole', 'Set-LiteConsoleIO',
         'Test-LiteStore', 'New-LitePassword', 'Set-LiteRandomSource',
         'Copy-LiteSecret', 'Export-LiteMetadata', 'Import-LiteMetadata',
+        'Get-LazaretteSecret', 'Get-LazaretteItemNames', 'Unlock-LazaretteVaultInteractive',
+        'Get-FleetSecret', 'Find-FleetSecretRoot', 'Import-LiteFromLazaretteCsv',
         'Get-LitePrefix', 'Set-LitePrefix', 'Set-LiteBackend', 'Set-LiteClipboardBackend'
     )
     CmdletsToExport       = @()
     VariablesToExport     = @()
-    AliasesToExport       = @()
+    AliasesToExport       = @('Get-ArcSecret', 'Get-ArcItemNames', 'Unlock-ArcVaultInteractive')
 }

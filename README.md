@@ -10,7 +10,7 @@ Lazarette Lite brings Lazarette's browser experience to Windows Credential Manag
 
 Double-click `Launch-LazaretteLite.bat`. The browser opens on a private, temporary loopback session. The launcher runs Windows PowerShell 5.1 with a process-scoped `-ExecutionPolicy Bypass`, like the other Fleet launchers, so the default Windows policy does not refuse the hidden script; it changes no machine setting. Use `--console` to keep launch diagnostics visible, or `--credential-console` for the terminal credential menu, including metadata-only import and export. Use `--replace` to restart an existing session without a prompt, `--stay` or `LAZARETTE_LITE_AUTO_STOP=0` to keep it alive after the tab closes, and `Stop-LazaretteLite.ps1` to stop it from the shell.
 
-The browser supports searching, favourites for the current session, adding and editing credentials, revealing and copying secrets, password and passphrase generation, and read-only PDF form extraction. PDF.js reads AcroForm and supported XFA fields inside a browser worker. Files and extracted values stay in that tab. Test the specific XFA forms needed for the demo.
+The browser supports searching, favourites for the current session, adding and editing credentials, revealing and copying secrets, password and passphrase generation, and read-only PDF form extraction. PDF.js reads AcroForm and supported XFA fields inside a browser worker. Files and extracted values stay in that tab.
 
 ## Fleet tools: Lite in place of Lazarette
 
@@ -25,6 +25,37 @@ It sets `LAZARETTE_PATH`, `ARC_PATH` and `GANGPLANK_LAZARETTE_PATH` in your user
 What a tool sees: there is no lock, so nothing prompts and the vault counts as unlocked whenever Credential Manager can be read; an item has one secret, so `-Field` fails the way Lazarette fails for a field an item does not have; an item with no secret yet throws instead of returning an empty string. Create the items the tools expect (the names in Lazarette's `docs/FLEET-ITEMS.md`, for example `ai-api-key` for Eight Bells or `talkforge-api` for TalkForge). Fairlead needs no registration: it reads Lite's items straight from Credential Manager under the `lazarette-lite/` prefix, so keep the default prefix for the names Fairlead asks for.
 
 `tools\lazarette.ps1` answers the `status`, `items`, `get` and `check` verbs of Lazarette's command line with the same output shapes and exit codes. `totp`, `run`, custom fields and Lazarette's Fairlead peer API need the full Lazarette.
+
+## Lite vs Lazarette
+
+| Capability | Lazarette Lite | Lazarette |
+| --- | --- | --- |
+| Secret by name (`Get-LiteSecret` / `Get-LazaretteSecret`) | Yes | Yes |
+| Custom fields (`-Field`) | No â€” always throws | Yes |
+| TOTP / authenticator codes | No | Yes |
+| Attachments | No | Yes |
+| Item history | No | Yes |
+| Fairlead peer API (`POST /peer/fairlead/v1/secrets`) | No â€” needs full Lazarette | Yes |
+
+### Fallback: full Lazarette first, Lite second
+
+`Get-FleetSecret -Service <name> [-User <user>] [-Field <field>]` (lib/Resolver.ps1)
+tries, in order, for each item:
+
+1. Full Lazarette, when a Lazarette checkout is found â€” `$env:LAZARETTE_PATH`,
+   `$env:ARC_PATH`, or a `Lazarette` folder next to this repo â€” and its vault unlocks.
+2. Lazarette Lite (Windows Credential Manager under the Lite prefix).
+
+If neither store has the item, the error names both stores and the item. When Lite
+answers, `-Field` still throws: Lite keeps one secret per item, so a field can only
+come from full Lazarette. The Fairlead peer route is not part of Lite; a peer that
+needs it must talk to full Lazarette.
+
+To move secrets from Lazarette into Lite, export the unlocked vault from Lazarette
+as CSV and run `Import-LiteFromLazaretteCsv -Path <export.csv>` (lib/Transfer.ps1).
+Only `name`, `username`, `password` (and `note`, as the comment) are imported;
+TOTP, folders, types and custom fields are left out. The CSV file is plaintext by
+Lazarette's design â€” delete it after the import.
 
 ## Authorization boundary
 

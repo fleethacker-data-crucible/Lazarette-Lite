@@ -1,5 +1,16 @@
 #requires -Version 5.1
-# =============================================================================
+$moduleLoading = Get-Variable -Name 'LazaretteLiteLoading' -Scope 'Script' -ErrorAction SilentlyContinue
+if (($null -eq $moduleLoading -or -not $moduleLoading.Value) -and -not (Get-Module LazaretteLite)) {
+    # Standalone dot-source (a Fleet launcher that did not Import-Module first).
+    # While LazaretteLite.psm1 is loading it sets $script:LazaretteLiteLoading,
+    # so this branch is skipped and the import cannot recurse into the module
+    # that is dot-sourcing this file. Get-Module alone is not enough: while the
+    # psm1 is executing, the module is not yet in the loaded-module table, so
+    # that check returns nothing and the import recursed to the 10-level
+    # nesting limit (Modules_ModuleTooDeeplyNested, Lite v5).
+    Import-Module (Join-Path (Split-Path $PSScriptRoot -Parent) 'LazaretteLite.psd1') -ErrorAction Stop
+}
+
 # The Lazarette 5 integration contract (Lazarette docs/INTEGRATION.md), answered by Lazarette Lite.
 #
 # A Fleet tool finds a folder that holds lib\Lazarette.ps1 (LAZARETTE_PATH, a folder named Lazarette next
@@ -9,9 +20,12 @@
 #   Get-LazaretteSecret -Service s [-User u] [-Field f]
 #   Get-LazaretteItemNames
 #   Lock-LazaretteVault
-# Point LAZARETTE_PATH at this folder (Register-LazaretteLite.ps1 does it once per user) and every such
-# tool reads Windows Credential Manager through Lite instead, with no change to the tool and without
-# Lazarette installed.
+#
+# Fleet fallback precedence (see lib/Resolver.ps1, Get-FleetSecret):
+#   1. Full Lazarette, when a Lazarette checkout is found and its vault unlocks.
+#   2. Lazarette Lite (this file): Windows Credential Manager under the Lite prefix.
+# This file is the Lite half. -Field always throws: Lite keeps one secret per item,
+# no custom fields, no TOTP, no attachments, no history, no Fairlead peer API.
 #
 # What is different here, on purpose:
 #   * There is no lock. Windows opens Credential Manager with the user's session, so "unlocked" means
@@ -22,10 +36,8 @@
 #   * -DataDir is accepted and ignored: Lite has no vault directory.
 #
 # Halyard and Gangplank load this file inside a dynamic module (New-Module { . $loader }), Semaphore and
-# Eight Bells dot-source it at script scope; both work: this file defines plain functions and imports
-# the module into whatever scope it is loaded in.
-# =============================================================================
-Import-Module (Join-Path (Split-Path $PSScriptRoot -Parent) 'LazaretteLite.psd1') -ErrorAction Stop
+# Eight Bells dot-source it at script scope. Both work: this file defines plain functions, and it imports
+# the module only when this file is not already being loaded by that module.
 
 function Test-LazaretteVaultUnlocked {
     <#

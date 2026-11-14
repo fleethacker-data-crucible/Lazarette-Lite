@@ -15,12 +15,20 @@ Describe 'LazaretteLite module' {
         $missing = @($manifest.FunctionsToExport | Where-Object { -not (Get-Command $_ -Module LazaretteLite -ErrorAction SilentlyContinue) })
         $missing | Should -BeNullOrEmpty
     }
-    It 'loads every lib\*.ps1 except the Fleet loaders and the command line, which import the module themselves' {
+    It 'still exports New-LitePassword, Set-LiteRandomSource and Test-LiteStore' {
+        foreach ($n in 'New-LitePassword', 'Set-LiteRandomSource', 'Test-LiteStore') {
+            Get-Command $n -Module LazaretteLite -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty -Because "$n disappears when Generator.ps1 or Check.ps1 leaves the loader"
+        }
+    }
+    It 'loads every lib script except the command line, including Generator.ps1 and Check.ps1' {
         $psm1 = Get-Content -LiteralPath (Join-Path $script:root 'LazaretteLite.psm1') -Raw
-        $loaders = @('Lazarette.ps1', 'Arc.ps1', 'Cli.ps1')
         foreach ($f in Get-ChildItem -LiteralPath (Join-Path $script:root 'lib') -File -Filter '*.ps1') {
-            if ($f.Name -in $loaders) { $psm1 | Should -Not -Match ([regex]::Escape($f.Name)) -Because "$($f.Name) imports the module itself" }
-            else { $psm1 | Should -Match ([regex]::Escape($f.Name)) -Because "$($f.Name) is part of the module" }
+            $quoted = "'" + $f.Name + "'"
+            if ($f.Name -eq 'Cli.ps1') {
+                $psm1 | Should -Not -Match ([regex]::Escape($quoted)) -Because 'the command line imports the module itself'
+            } else {
+                $psm1 | Should -Match ([regex]::Escape($quoted)) -Because "$($f.Name) is part of the module"
+            }
         }
     }
 }

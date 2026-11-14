@@ -9,7 +9,7 @@ jobs:
   windows:
     name: lite-windows
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: [self-hosted, Windows, X64, headless]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -30,7 +30,7 @@ jobs:
             if ($errs) { $bad++; $errs | ForEach-Object { Write-Host "$($_.Extent.File):$($_.Extent.StartLineNumber) $($_.Message)" } }
           }
           if ($bad) { throw "$bad script(s) have parse errors." }
-          # The Pester suite arrives with the credential-store PR; the fake backend is used, never the real Credential Manager.
+          # The fake backend is used, never the real Credential Manager.
           if (Test-Path tests\Run-Tests.ps1) {
             & powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests\Run-Tests.ps1
             if ($LASTEXITCODE) { exit $LASTEXITCODE }

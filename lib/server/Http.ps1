@@ -369,6 +369,14 @@ function Invoke-ArcHttpRequest {
         Send-ArcJson -Status 200 -Object @{ ok = $true } -ExtraHeaders @($cookie)
         return
     }
+    if ($Req.Path -eq '/api/health' -and $Req.Method -eq 'GET') {
+        # No auth, like Lazarette's GET /api/health (docs/API.md): the UI boot
+        # probe (ui-src getHealth, no client header, no cookie) and Fairlead
+        # discovery call it before any session exists. The loopback-Host check
+        # above still applies, so this stays loopback-only.
+        Invoke-ArcRoute -Req $Req
+        return
+    }
     # Everything else: cookie + client header
     $client = ''; if ($Req.Headers.ContainsKey('X-ARC-Client')) { $client = $Req.Headers['X-ARC-Client'] }
     if ($client -ne 'arc-ui/1') { Send-ArcError 401 'session' 'Missing client header'; return }

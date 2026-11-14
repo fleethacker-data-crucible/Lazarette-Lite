@@ -26,10 +26,12 @@ param(
 
 $files = @(
     Get-ChildItem -LiteralPath $Root -File | Where-Object { $_.Extension -in '.ps1', '.psm1', '.psd1' }
-    # lib\ recursively: Start-LazaretteLite.ps1 dot-sources lib\server\*.ps1, which AllSigned would refuse unsigned.
+    # lib\ recursively, including lib\server, and tools\: AllSigned would refuse an unsigned script there.
     foreach ($sub in 'lib', 'tools') {
         $dir = Join-Path $Root $sub
-        if (Test-Path -LiteralPath $dir) { Get-ChildItem -LiteralPath $dir -File -Recurse -Filter '*.ps1' }
+        if (Test-Path -LiteralPath $dir) {
+            Get-ChildItem -LiteralPath $dir -File -Recurse | Where-Object { $_.Extension -in '.ps1', '.psm1', '.psd1' }
+        }
     }
 )
 if ($files.Count -eq 0) { throw "No scripts found under '$Root'." }
